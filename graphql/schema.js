@@ -58,6 +58,9 @@ module.exports = buildSchema(`
         
         getGenre(id: Int!): Genre!
         getGenres: [Genre!]!
+        
+        getBook(id: Int!): Book!
+        getBooks: [Book!]!
     }
     
     schema {

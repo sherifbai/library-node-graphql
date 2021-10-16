@@ -400,20 +400,14 @@ module.exports = {
         }
     },
 
-    updateBook: async function ({id, name, genres, authors}, req) {
+    getBook: async function ({ id }, req) {
         if (!req.isAuth) {
             const error = new Error('Not authenticated');
             error.status = 403;
             throw error;
         }
 
-        if (req.role !== 'admin' && req.role !== 'manager') {
-            const error = new Error('You have not permission here');
-            error.status = 401;
-            throw error;
-        }
-
-        const book = await Book.findOne({where: {id: id}});
+        const book = await Book.findOne({ where: { id: id }, include: ['genres', 'authors']});
 
         if (!book) {
             const error = new Error('Book not found');
@@ -421,45 +415,21 @@ module.exports = {
             throw error;
         }
 
-        book.name = name;
-
-        await book.save();
-
-        let genres_list;
-        genres_list = [];
-
-        let authors_list;
-        authors_list = [];
-
-        for (const item of genres) {
-            const genre = await Genre.findOne({where: {id: item}});
-
-            genres_list.push(genre);
-
-            const book_genre = await BookGenre.findAll({where: {book_id: id}});
-
-            for (const j of book_genre) {
-                if (!j.genre_id !== genre.id) {
-                    await BookGenre.create({
-                        book_id: book.id,
-                        genre_id: genre.id
-                    });
-                }
-
-                j.genre_id = genre.id;
-
-                await j.save();
-
-                break;
-            }
-        }
-
-
         return {
             id: book.id,
-            name: name,
-            genres: genres_list,
-            authors: authors_list
+            name: book.name,
+            genres: book.genres,
+            authors: book.authors
         }
+    },
+
+    getBooks: async function ({}, req) {
+        if (!req.isAuth) {
+            const error = new Error('Not authenticated');
+            error.status = 403;
+            throw error;
+        }
+
+        return await Book.findAll({include: ['genres', 'authors']})
     }
 }
